@@ -34,23 +34,58 @@ async function createArecord(input) {
 	console.log(`New entry created with an id of: ${rsp.id}`);
 }
 
+const validate = input => {
+	if (!input) {
+		return false;
+	} else {
+		return true;
+	}
+};
+
 const newEntry = () => {
 	inquirer
 		.prompt([
 			{
 				name: 'firstName',
 				type: 'input',
-				message: 'First Name:'
+				message: 'First Name:',
+				validate: input => {
+					if (!input) {
+						console.log('Input cannot be blank!');
+						return false;
+					} else {
+						return true;
+					}
+				}
 			},
 			{
 				name: 'lastName',
 				type: 'input',
-				message: 'Last Name:'
+				message: 'Last Name:',
+				validate: input => {
+					if (!input) {
+						console.log('Input cannot be blank!');
+						return false;
+					} else {
+						return true;
+					}
+				}
 			},
 			{
 				name: 'age',
 				type: 'input',
-				message: 'Age:'
+				message: 'Age:',
+				validate: input => {
+					if (!input) {
+						console.log('Input cannot be blank!');
+						return false;
+					} else if (isNaN(input)) {
+						console.log('Input must be a number');
+						return false;
+					} else {
+						return true;
+					}
+				}
 			}
 		])
 		.then(answers => {
