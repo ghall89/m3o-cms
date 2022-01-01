@@ -49,13 +49,44 @@ async function createArecord(input) {
 	console.log(`New entry created with an id of: ${rsp.id}`);
 }
 
-const validate = input => {
-	if (!input) {
-		return false;
-	} else {
-		return true;
+async function deleteRecord() {
+	const rsp = await dbService.read({
+		table: 'portfolio'
+	});
+
+	const options = [];
+
+	for (let i = 0; i < rsp.records.length; i++) {
+		options.push(rsp.records[i].title);
 	}
-};
+
+	inquirer
+		.prompt([
+			{
+				name: 'choice',
+				type: 'list',
+				message: 'Choose a record:',
+				choices: options,
+				filter: input => {
+					return options.indexOf(input);
+				}
+			},
+			{
+				name: 'confirm',
+				type: 'confirm',
+				message: 'Are you sure you want to delete this record?'
+			}
+		])
+		.then(async answers => {
+			if (answers.confirm) {
+				const rsp2 = await dbService.delete({
+					id: rsp.records[answers.choice].id,
+					table: 'portfolio'
+				});
+				console.log(`${options[answers.choice]} has been deleted!`);
+			}
+		});
+}
 
 const newEntry = () => {
 	inquirer
@@ -158,7 +189,7 @@ inquirer
 			name: 'action',
 			type: 'list',
 			message: 'Pick an action:',
-			choices: ['View Records', 'Add Record']
+			choices: ['View Records', 'Add Record', 'Delete Record']
 		}
 	])
 	.then(answers => {
@@ -168,6 +199,9 @@ inquirer
 				break;
 			case 'Add Record':
 				newEntry();
+				break;
+			case 'Delete Record':
+				deleteRecord();
 				break;
 		}
 	});
