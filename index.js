@@ -10,11 +10,10 @@ async function readRecords() {
 	const rsp = await dbService.read({
 		table: 'portfolio'
 	});
-	console.log(rsp);
 
 	const options = [];
 
-	for (let i = 1; i < rsp.records.length; i++) {
+	for (let i = 0; i < rsp.records.length; i++) {
 		options.push(rsp.records[i].title);
 	}
 
@@ -24,11 +23,14 @@ async function readRecords() {
 				name: 'choice',
 				type: 'list',
 				message: 'Choose a record:',
-				choices: options
+				choices: options,
+				filter: input => {
+					return options.indexOf(input);
+				}
 			}
 		])
 		.then(answers => {
-			console.log(answers);
+			console.log(rsp.records[answers.choice]);
 		});
 }
 
