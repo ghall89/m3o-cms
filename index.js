@@ -25,11 +25,14 @@ async function readRecords() {
 async function createArecord(input) {
 	const rsp = await dbService.create({
 		record: {
-			firstName: input.firstName,
-			lastName: input.lastName,
-			age: input.age
+			title: input.title,
+			description: input.description,
+			url: input.url,
+			github: input.github,
+			img: input.img,
+			tags: input.tags
 		},
-		table: 'names'
+		table: 'portfolio'
 	});
 	console.log(`New entry created with an id of: ${rsp.id}`);
 }
@@ -46,9 +49,9 @@ const newEntry = () => {
 	inquirer
 		.prompt([
 			{
-				name: 'firstName',
+				name: 'title',
 				type: 'input',
-				message: 'First Name:',
+				message: 'Project Name:',
 				validate: input => {
 					if (!input) {
 						console.log('Input cannot be blank!');
@@ -59,9 +62,9 @@ const newEntry = () => {
 				}
 			},
 			{
-				name: 'lastName',
+				name: 'description',
 				type: 'input',
-				message: 'Last Name:',
+				message: 'Description:',
 				validate: input => {
 					if (!input) {
 						console.log('Input cannot be blank!');
@@ -72,23 +75,67 @@ const newEntry = () => {
 				}
 			},
 			{
-				name: 'age',
+				name: 'url',
 				type: 'input',
-				message: 'Age:',
+				message: 'Project URL:',
 				validate: input => {
 					if (!input) {
 						console.log('Input cannot be blank!');
-						return false;
-					} else if (isNaN(input)) {
-						console.log('Input must be a number');
 						return false;
 					} else {
 						return true;
 					}
 				}
+			},
+			{
+				name: 'github',
+				type: 'input',
+				message: 'GitHub URL:',
+				validate: input => {
+					if (!input) {
+						console.log('Input cannot be blank!');
+						return false;
+					} else {
+						return true;
+					}
+				}
+			},
+			{
+				name: 'img',
+				type: 'input',
+				message: 'Image URL:',
+				validate: input => {
+					if (!input) {
+						console.log('Input cannot be blank!');
+						return false;
+					} else {
+						return true;
+					}
+				}
+			},
+			{
+				name: 'tags',
+				type: 'checkbox',
+				message: 'Select Tags',
+				choices: [
+					'HTML',
+					'CSS',
+					'JavaScript',
+					'JSON',
+					'DOM',
+					'jQuery',
+					'Bootstrap',
+					'Tailwind',
+					'Node.js',
+					'React',
+					'Netlify',
+					'Heroku',
+					'Electron'
+				]
 			}
 		])
 		.then(answers => {
+			console.log(answers);
 			createArecord(answers);
 		});
 };
