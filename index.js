@@ -8,18 +8,28 @@ const dbService = new DbService(process.env.API_KEY);
 
 async function readRecords() {
 	const rsp = await dbService.read({
-		table: 'names'
+		table: 'portfolio'
 	});
-	const data = [['FIRST NAME', 'LAST NAME', 'AGE']];
-	for (let i = 0; i < rsp.records.length; i++) {
-		const arr = [
-			rsp.records[i].firstName,
-			rsp.records[i].lastName,
-			rsp.records[i].age
-		];
-		data.push(arr);
+	console.log(rsp);
+
+	const options = [];
+
+	for (let i = 1; i < rsp.records.length; i++) {
+		options.push(rsp.records[i].title);
 	}
-	console.log(table(data));
+
+	inquirer
+		.prompt([
+			{
+				name: 'choice',
+				type: 'list',
+				message: 'Choose a record:',
+				choices: options
+			}
+		])
+		.then(answers => {
+			console.log(answers);
+		});
 }
 
 async function createArecord(input) {
