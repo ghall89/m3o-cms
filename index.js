@@ -28,14 +28,23 @@ const validateUrl = input => {
 };
 
 async function readRecords() {
-	const rsp = await dbService.read({
-		table: 'portfolio'
-	});
+	const rsp = await dbService
+		.read({
+			table: 'portfolio'
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
 
 	const options = [];
 
 	for (let i = 0; i < rsp.records.length; i++) {
 		options.push(rsp.records[i].title);
+	}
+
+	if (options.length < 1) {
+		console.log('Database is empty.');
+		return;
 	}
 
 	inquirer
@@ -56,29 +65,42 @@ async function readRecords() {
 }
 
 async function createArecord(input) {
-	const rsp = await dbService.create({
-		record: {
-			title: input.title,
-			description: input.description,
-			url: input.url,
-			github: input.github,
-			img: input.img,
-			tags: input.tags
-		},
-		table: 'portfolio'
-	});
+	const rsp = await dbService
+		.create({
+			record: {
+				title: input.title,
+				description: input.description,
+				url: input.url,
+				github: input.github,
+				img: input.img,
+				tags: input.tags
+			},
+			table: 'portfolio'
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
 	console.log(`New entry created with an id of: ${rsp.id}`);
 }
 
 async function deleteRecord() {
-	const rsp = await dbService.read({
-		table: 'portfolio'
-	});
+	const rsp = await dbService
+		.read({
+			table: 'portfolio'
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
 
 	const options = [];
 
 	for (let i = 0; i < rsp.records.length; i++) {
 		options.push(rsp.records[i].title);
+	}
+
+	if (options.length < 1) {
+		console.log('Database is empty.');
+		return;
 	}
 
 	inquirer

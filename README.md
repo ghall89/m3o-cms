@@ -8,5 +8,5 @@ The goal of the project is to create a tool to manage my portfolio at [ghall.dev
 
 I don't actually recommend running this code, it's just a VERY quick and dirty prototype at this stage, and as such has many issues, such as:
 
-- No error checking
 - No type of authentication outside of an API key (which you must provide yourself)
+- No way to edit database entries
