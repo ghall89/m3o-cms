@@ -9,6 +9,7 @@ const dbService = new DbService(process.env.API_KEY);
 // check if input is empty
 const validateText = input => {
 	if (!input) {
+		return false;
 	} else {
 		return true;
 	}
