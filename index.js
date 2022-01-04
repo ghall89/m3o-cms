@@ -5,6 +5,22 @@ const inquirer = require('inquirer');
 
 const dbService = new DbService(process.env.API_KEY);
 
+const tags = [
+	'HTML',
+	'CSS',
+	'JavaScript',
+	'JSON',
+	'DOM',
+	'jQuery',
+	'Bootstrap',
+	'Tailwind',
+	'Node.js',
+	'React',
+	'Netlify',
+	'Heroku',
+	'Electron'
+];
+
 // check if input is empty
 const validateText = input => {
 	if (!input) {
@@ -27,7 +43,9 @@ const validateUrl = input => {
 	}
 };
 
-async function readRecords() {
+//read function
+
+const dbRead = async () => {
 	const rsp = await dbService
 		.read({
 			table: 'portfolio'
@@ -35,11 +53,66 @@ async function readRecords() {
 		.catch(err => {
 			throw 'No response from db.';
 		});
+	return rsp;
+};
+
+//create function
+
+const dbCreate = async input => {
+	const rsp = await dbService
+		.create({
+			record: input,
+			table: 'portfolio'
+		})
+		.then(rsp => {
+			console.log(`New entry created for ${input.title}.`);
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
+};
+
+// modify function
+
+const dbModify = async input => {
+	const rsp = await dbService
+		.update({
+			record: input,
+			table: 'portfolio'
+		})
+		.then(rsp => {
+			console.log(`${input.title} was updated!`);
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
+};
+
+//delete function
+
+const dbDelete = async input => {
+	const rsp = await dbService
+		.delete({
+			id: input.id,
+			table: 'portfolio'
+		})
+		.then(rsp => {
+			console.log(`${input.title} has been deleted!`);
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
+};
+
+// get data from database and display chosen item
+
+const readRecord = async () => {
+	const data = await dbRead();
 
 	const options = [];
 
-	for (let i = 0; i < rsp.records.length; i++) {
-		options.push(rsp.records[i].title);
+	for (let i = 0; i < data.records.length; i++) {
+		options.push(data.records[i].title);
 	}
 
 	if (options.length < 1) {
@@ -60,96 +133,83 @@ async function readRecords() {
 			}
 		])
 		.then(answers => {
-			console.log(rsp.records[answers.choice]);
-		});
-}
-
-async function createArecord(input) {
-	const rsp = await dbService
-		.create({
-			record: {
-				title: input.title,
-				description: input.description,
-				url: input.url,
-				github: input.github,
-				img: input.img,
-				tags: input.tags
-			},
-			table: 'portfolio'
+			if (answers) {
+				console.log(data.records[answers.choice]);
+			}
 		})
 		.catch(err => {
-			throw 'No response from db.';
+			throw err;
 		});
-	console.log(`New entry created with an id of: ${rsp.id}`);
-}
+};
 
-async function deleteRecord() {
-	const rsp = await dbService
-		.read({
-			table: 'portfolio'
-		})
-		.catch(err => {
-			throw 'No response from db.';
-		});
+//get user input and pass it to dbCreate
 
-	const options = [];
-
-	for (let i = 0; i < rsp.records.length; i++) {
-		options.push(rsp.records[i].title);
-	}
-
-	if (options.length < 1) {
-		console.log('Database is empty.');
-		return;
-	}
-
+const createRecord = () => {
 	inquirer
 		.prompt([
 			{
-				name: 'choice',
-				type: 'list',
-				message: 'Choose a record:',
-				choices: options,
-				filter: input => {
-					return options.indexOf(input);
+				name: 'title',
+				type: 'input',
+				message: 'Project Name:',
+				validate: input => {
+					return validateText(input);
 				}
 			},
 			{
-				name: 'confirm',
-				type: 'confirm',
-				message: 'Are you sure you want to delete this record?'
+				name: 'description',
+				type: 'input',
+				message: 'Description:',
+				validate: input => {
+					return validateText(input);
+				}
+			},
+			{
+				name: 'url',
+				type: 'input',
+				message: 'Project URL:',
+				validate: input => {
+					return validateUrl(input);
+				}
+			},
+			{
+				name: 'github',
+				type: 'input',
+				message: 'GitHub URL:',
+				validate: input => {
+					return validateUrl(input);
+				}
+			},
+			{
+				name: 'img',
+				type: 'input',
+				message: 'Image URL:',
+				validate: input => {
+					return validateUrl(input);
+				}
+			},
+			{
+				name: 'tags',
+				type: 'checkbox',
+				message: 'Select Tags',
+				choices: tags
 			}
 		])
-		.then(async answers => {
-			if (answers.confirm) {
-				const rsp2 = await dbService
-					.delete({
-						id: rsp.records[answers.choice].id,
-						table: 'portfolio'
-					})
-					.catch(err => {
-						throw 'No response from db.';
-					});
-				console.log(`${options[answers.choice]} has been deleted!`);
-			}
+		.then(answers => {
+			dbCreate(answers);
 		});
-}
+};
 
-async function editRecord() {
-	const rsp = await dbService
-		.read({
-			table: 'portfolio'
-		})
-		.catch(err => {
-			throw 'No response from db.';
-		});
+//get user input and pass it to dbModify
+
+const modifyRecord = async () => {
+	const data = await dbRead();
 
 	const options = [];
 
 	let oldData;
 
-	for (let i = 0; i < rsp.records.length; i++) {
-		options.push(rsp.records[i].title);
+	for (let i = 0; i < data.records.length; i++) {
+		options.push(data.records[i].title);
 	}
 
 	if (options.length < 1) {
@@ -170,17 +230,8 @@ async function editRecord() {
 			}
 		])
 		.then(async answers => {
-			const rsp2 = await dbService
-				.read({
-					id: rsp.records[answers.choice].id,
-					table: 'portfolio'
-				})
-				.then(data => {
-					oldData = data.records[0];
-				})
-				.catch(err => {
-					throw 'No response from db.';
-				});
+			oldData = data.records[answers.choice];
+
 			inquirer
 				.prompt([
 					{
@@ -233,113 +284,56 @@ async function editRecord() {
 						type: 'checkbox',
 						message: 'Select Tags',
 						default: oldData.tags,
-						choices: [
-							'HTML',
-							'CSS',
-							'JavaScript',
-							'JSON',
-							'DOM',
-							'jQuery',
-							'Bootstrap',
-							'Tailwind',
-							'Node.js',
-							'React',
-							'Netlify',
-							'Heroku',
-							'Electron'
-						]
+						choices: tags
 					}
 				])
-				.then(async answers => {
-					const rsp = await dbService
-						.update({
-							record: {
-								id: oldData.id,
-								title: answers.title,
-								description: answers.description,
-								url: answers.url,
-								github: answers.github,
-								img: answers.img,
-								tags: answers.tags
-							},
-							table: 'portfolio'
-						})
-						.catch(err => {
-							throw 'No response from db.';
-						});
+				.then(answers => {
+					dbModify({ ...answers, id: oldData.id });
 				});
 		});
-}
+};
 
-const newEntry = () => {
+//get user input and pass it to dbDelete
+
+const deleteRecord = async () => {
+	const data = await dbRead();
+
+	const options = [];
+
+	for (let i = 0; i < data.records.length; i++) {
+		options.push(data.records[i].title);
+	}
+
+	if (options.length < 1) {
+		console.log('Database is empty.');
+		return;
+	}
+
 	inquirer
 		.prompt([
 			{
-				name: 'title',
-				type: 'input',
-				message: 'Project Name:',
-				validate: input => {
-					return validateText(input);
+				name: 'choice',
+				type: 'list',
+				message: 'Choose a record:',
+				choices: options,
+				filter: input => {
+					return options.indexOf(input);
 				}
 			},
 			{
-				name: 'description',
-				type: 'input',
-				message: 'Description:',
-				validate: input => {
-					return validateText(input);
-				}
-			},
-			{
-				name: 'url',
-				type: 'input',
-				message: 'Project URL:',
-				validate: input => {
-					return validateUrl(input);
-				}
-			},
-			{
-				name: 'github',
-				type: 'input',
-				message: 'GitHub URL:',
-				validate: input => {
-					return validateUrl(input);
-				}
-			},
-			{
-				name: 'img',
-				type: 'input',
-				message: 'Image URL:',
-				validate: input => {
-					return validateUrl(input);
-				}
-			},
-			{
-				name: 'tags',
-				type: 'checkbox',
-				message: 'Select Tags',
-				choices: [
-					'HTML',
-					'CSS',
-					'JavaScript',
-					'JSON',
-					'DOM',
-					'jQuery',
-					'Bootstrap',
-					'Tailwind',
-					'Node.js',
-					'React',
-					'Netlify',
-					'Heroku',
-					'Electron'
-				]
+				name: 'confirm',
+				type: 'confirm',
+				message: 'Are you sure you want to delete this record?'
 			}
 		])
 		.then(answers => {
-			console.log(answers);
-			createArecord(answers);
+			if (answers.confirm) {
+				dbDelete(data.records[answers.choice]);
+			}
 		});
 };
+
+// initial menu
 
 inquirer
 	.prompt([
@@ -353,13 +347,13 @@ inquirer
 	.then(answers => {
 		switch (answers.action) {
 			case 'View Records':
-				readRecords();
+				readRecord();
 				break;
 			case 'Add Record':
-				newEntry();
+				createRecord();
 				break;
 			case 'Edit Record':
-				editRecord();
+				modifyRecord();
 				break;
 			case 'Delete Record':
 				deleteRecord();
