@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const { DbService } = require('m3o/db');
 const inquirer = require('inquirer');
-const { table } = require('table');
 
 const dbService = new DbService(process.env.API_KEY);
 
@@ -123,12 +122,152 @@ async function deleteRecord() {
 		])
 		.then(async answers => {
 			if (answers.confirm) {
-				const rsp2 = await dbService.delete({
-					id: rsp.records[answers.choice].id,
-					table: 'portfolio'
-				});
+				const rsp2 = await dbService
+					.delete({
+						id: rsp.records[answers.choice].id,
+						table: 'portfolio'
+					})
+					.catch(err => {
+						throw 'No response from db.';
+					});
 				console.log(`${options[answers.choice]} has been deleted!`);
 			}
+		});
+}
+
+async function editRecord() {
+	const rsp = await dbService
+		.read({
+			table: 'portfolio'
+		})
+		.catch(err => {
+			throw 'No response from db.';
+		});
+
+	const options = [];
+
+	let oldData;
+
+	for (let i = 0; i < rsp.records.length; i++) {
+		options.push(rsp.records[i].title);
+	}
+
+	if (options.length < 1) {
+		console.log('Database is empty.');
+		return;
+	}
+
+	inquirer
+		.prompt([
+			{
+				name: 'choice',
+				type: 'list',
+				message: 'Choose a record:',
+				choices: options,
+				filter: input => {
+					return options.indexOf(input);
+				}
+			}
+		])
+		.then(async answers => {
+			const rsp2 = await dbService
+				.read({
+					id: rsp.records[answers.choice].id,
+					table: 'portfolio'
+				})
+				.then(data => {
+					oldData = data.records[0];
+				})
+				.catch(err => {
+					throw 'No response from db.';
+				});
+			inquirer
+				.prompt([
+					{
+						name: 'title',
+						type: 'input',
+						message: 'Project Name:',
+						default: oldData.title,
+						validate: input => {
+							return validateText(input);
+						}
+					},
+					{
+						name: 'description',
+						type: 'input',
+						message: 'Description:',
+						default: oldData.description,
+						validate: input => {
+							return validateText(input);
+						}
+					},
+					{
+						name: 'url',
+						type: 'input',
+						message: 'Project URL:',
+						default: oldData.url,
+						validate: input => {
+							return validateUrl(input);
+						}
+					},
+					{
+						name: 'github',
+						type: 'input',
+						message: 'GitHub URL:',
+						default: oldData.github,
+						validate: input => {
+							return validateUrl(input);
+						}
+					},
+					{
+						name: 'img',
+						type: 'input',
+						message: 'Image URL:',
+						default: oldData.img,
+						validate: input => {
+							return validateUrl(input);
+						}
+					},
+					{
+						name: 'tags',
+						type: 'checkbox',
+						message: 'Select Tags',
+						default: oldData.tags,
+						choices: [
+							'HTML',
+							'CSS',
+							'JavaScript',
+							'JSON',
+							'DOM',
+							'jQuery',
+							'Bootstrap',
+							'Tailwind',
+							'Node.js',
+							'React',
+							'Netlify',
+							'Heroku',
+							'Electron'
+						]
+					}
+				])
+				.then(async answers => {
+					const rsp = await dbService
+						.update({
+							record: {
+								id: oldData.id,
+								title: answers.title,
+								description: answers.description,
+								url: answers.url,
+								github: answers.github,
+								img: answers.img,
+								tags: answers.tags
+							},
+							table: 'portfolio'
+						})
+						.catch(err => {
+							throw 'No response from db.';
+						});
+				});
 		});
 }
 
@@ -208,7 +347,7 @@ inquirer
 			name: 'action',
 			type: 'list',
 			message: 'Pick an action:',
-			choices: ['View Records', 'Add Record', 'Delete Record']
+			choices: ['View Records', 'Add Record', 'Edit Record', 'Delete Record']
 		}
 	])
 	.then(answers => {
@@ -218,6 +357,9 @@ inquirer
 				break;
 			case 'Add Record':
 				newEntry();
+				break;
+			case 'Edit Record':
+				editRecord();
 				break;
 			case 'Delete Record':
 				deleteRecord();
